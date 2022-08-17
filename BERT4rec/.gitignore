@@ -125,3 +125,6 @@ data/*.his
 data/*.tfrecord
 data/*.vocab
 test_files/*
+
+results/
+

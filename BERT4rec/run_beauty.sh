@@ -1,4 +1,4 @@
-CKPT_DIR="/path/BERT4Rec"
+CKPT_DIR="/home/matej/diplomski_rad/BERT4rec_py3_tf2/BERT4rec"
 dataset_name="beauty"
 max_seq_length=50
 max_predictions_per_seq=30
@@ -15,17 +15,23 @@ pool_size=10
 
 signature="-mp${mask_prob}-sw${prop_sliding_window}-mlp${masked_lm_prob}-df${dupe_factor}-mpps${max_predictions_per_seq}-msl${max_seq_length}"
 
-
-python -u gen_data_fin.py \
-    --dataset_name=${dataset_name} \
-    --max_seq_length=${max_seq_length} \
-    --max_predictions_per_seq=${max_predictions_per_seq} \
-    --mask_prob=${mask_prob} \
-    --dupe_factor=${dupe_factor} \
-    --masked_lm_prob=${masked_lm_prob} \
-    --prop_sliding_window=${prop_sliding_window} \
-    --signature=${signature} \
-    --pool_size=${pool_size} \
+train_input_file=./data/${dataset_name}${signature}.train.tfrecord
+if [ -f "$train_input_file" ]
+then
+  echo "$train_input_file file already exist. No need for dataset construction!"
+else
+  { python -u gen_data_fin.py \
+      --dataset_name=${dataset_name} \
+      --max_seq_length=${max_seq_length} \
+      --max_predictions_per_seq=${max_predictions_per_seq} \
+      --mask_prob=${mask_prob} \
+      --dupe_factor=${dupe_factor} \
+      --masked_lm_prob=${masked_lm_prob} \
+      --prop_sliding_window=${prop_sliding_window} \
+      --signature=${signature} \
+      --pool_size=${pool_size}
+      }
+fi
 
 
 CUDA_VISIBLE_DEVICES=1 python -u run.py \
@@ -33,7 +39,7 @@ CUDA_VISIBLE_DEVICES=1 python -u run.py \
     --test_input_file=./data/${dataset_name}${signature}.test.tfrecord \
     --vocab_filename=./data/${dataset_name}${signature}.vocab \
     --user_history_filename=./data/${dataset_name}${signature}.his \
-    --checkpointDir=${CKPT_DIR}/${dataset_name} \
+    --checkpointDir=${CKPT_DIR}/results/${dataset_name} \
     --signature=${signature}-${dim} \
     --do_train=True \
     --do_eval=True \
