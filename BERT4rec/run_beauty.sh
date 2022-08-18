@@ -1,5 +1,6 @@
 #set "BERT4rec_HOME_DIR" as env variable in your shell!!!!!
 BERT4rec_HOME_DIR=${BERT4rec_HOME_DIR}
+CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
 dataset_name="beauty"
 max_seq_length=50
 max_predictions_per_seq=30
@@ -35,7 +36,7 @@ else
 fi
 
 
-CUDA_VISIBLE_DEVICES=1 python -u run.py \
+python -u run.py \
     --train_input_file=./data/${dataset_name}${signature}.train.tfrecord \
     --test_input_file=./data/${dataset_name}${signature}.test.tfrecord \
     --vocab_filename=./data/${dataset_name}${signature}.vocab \
