@@ -1,4 +1,5 @@
-CKPT_DIR="/home/matej/diplomski_rad/BERT4rec_py3_tf2/BERT4rec"
+#set "BERT4rec_HOME_DIR" as env variable in your shell!!!!!
+BERT4rec_HOME_DIR=${BERT4rec_HOME_DIR}
 dataset_name="beauty"
 max_seq_length=50
 max_predictions_per_seq=30
@@ -39,7 +40,7 @@ CUDA_VISIBLE_DEVICES=1 python -u run.py \
     --test_input_file=./data/${dataset_name}${signature}.test.tfrecord \
     --vocab_filename=./data/${dataset_name}${signature}.vocab \
     --user_history_filename=./data/${dataset_name}${signature}.his \
-    --checkpointDir=${CKPT_DIR}/results/${dataset_name} \
+    --checkpointDir=${BERT4rec_HOME_DIR}/results/${dataset_name} \
     --signature=${signature}-${dim} \
     --do_train=True \
     --do_eval=True \

@@ -13,6 +13,7 @@ This is a version of [https://github.com/FeiSun/BERT4Rec](https://github.com/Fei
 **Run**
 
 For simplicity, here we take ml-1m as an example:
+set "BERT4rec_HOME_DIR" as env variable in your shell before run!!!!! This is path to BERT4rec package.
 
 ``` bash
 ./run_ml-1m.sh
