@@ -132,7 +132,7 @@ class BertModel(object):
         token_type_ids: (optional) int32 Tensor of shape [batch_size, seq_length].
         use_one_hot_embeddings: (optional) bool. Whether to use one-hot word
             embeddings or tf.embedding_lookup() for the word embeddings. On the TPU,
-            it is must faster if this is True, on the CPU or GPU, it is faster if
+            it is much faster if this is True, on the CPU or GPU, it is faster if
             this is False.
         scope: (optional) variable scope. Defaults to "bert".
 

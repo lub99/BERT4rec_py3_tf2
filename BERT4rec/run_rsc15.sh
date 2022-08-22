@@ -1,10 +1,12 @@
 #set "BERT4rec_HOME_DIR" as env variable in your shell!!!!!
 BERT4rec_HOME_DIR=${BERT4rec_HOME_DIR}
 CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
-dataset_name="beauty"
+dataset_name="BERT4REC_yoochoose-clicks-100k_train_tr"
 max_seq_length=50
-max_predictions_per_seq=30
-masked_lm_prob=0.6
+max_predictions_per_seq=3
+#max_predictions_per_seq=30
+masked_lm_prob=0.3
+#masked_lm_prob=0.6
 
 dim=64
 batch_size=256

@@ -1,5 +1,6 @@
 from __future__ import print_function
 from collections import defaultdict
+import re
 
 
 def data_partition(fname):
@@ -11,7 +12,7 @@ def data_partition(fname):
     # assume user/item index starting from 1
     f = open(fname, 'r')
     for line in f:
-        u, i = line.rstrip().split(' ')
+        u, i = re.split("\s+", line.rstrip())
         u = int(u)
         i = int(i)
         usernum = max(u, usernum)
@@ -22,4 +23,3 @@ def data_partition(fname):
         user_train[user] = User[user][:-1]
         user_test[user] = [User[user][-1]]
     return [user_train, user_test, usernum, itemnum]
-
