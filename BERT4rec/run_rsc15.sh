@@ -1,9 +1,10 @@
 #set "BERT4rec_HOME_DIR" as env variable in your shell!!!!!
 BERT4rec_HOME_DIR=${BERT4rec_HOME_DIR}
 CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
-dataset_name="BERT4REC_yoochoose-clicks-100k_train_tr"
+train_dataset_name="BERT4REC_yoochoose-clicks-100k_train_full"
+test_dataset_name="BERT4REC_yoochoose-clicks-100k_test"
 max_seq_length=50
-max_predictions_per_seq=3
+max_predictions_per_seq=1
 #max_predictions_per_seq=30
 masked_lm_prob=0.3
 #masked_lm_prob=0.6
@@ -19,13 +20,14 @@ pool_size=10
 
 signature="-mp${mask_prob}-sw${prop_sliding_window}-mlp${masked_lm_prob}-df${dupe_factor}-mpps${max_predictions_per_seq}-msl${max_seq_length}"
 
-train_input_file=./data/${dataset_name}${signature}.train.tfrecord
+train_input_file=./data/${train_dataset_name}${signature}.train.tfrecord
 if [ -f "$train_input_file" ]
 then
   echo "$train_input_file file already exist. No need for dataset construction!"
 else
   { python -u gen_data_fin.py \
-      --dataset_name=${dataset_name} \
+      --train_dataset_name=${train_dataset_name} \
+      --test_dataset_name=${test_dataset_name} \
       --max_seq_length=${max_seq_length} \
       --max_predictions_per_seq=${max_predictions_per_seq} \
       --mask_prob=${mask_prob} \
@@ -39,15 +41,15 @@ fi
 
 
 python -u run.py \
-    --train_input_file=./data/${dataset_name}${signature}.train.tfrecord \
-    --test_input_file=./data/${dataset_name}${signature}.test.tfrecord \
-    --vocab_filename=./data/${dataset_name}${signature}.vocab \
-    --user_history_filename=./data/${dataset_name}${signature}.his \
-    --checkpointDir=${BERT4rec_HOME_DIR}/results/${dataset_name} \
+    --train_input_file=./data/${train_dataset_name}${signature}.train.tfrecord \
+    --test_input_file=./data/${train_dataset_name}${signature}.test.tfrecord \
+    --vocab_filename=./data/${train_dataset_name}${signature}.vocab \
+    --user_history_filename=./data/${train_dataset_name}${signature}.his \
+    --checkpointDir=${BERT4rec_HOME_DIR}/results/${train_dataset_name} \
     --signature=${signature}-${dim} \
     --do_train=True \
     --do_eval=True \
-    --bert_config_file=./bert_train/bert_config_${dataset_name}_${dim}.json \
+    --bert_config_file=./bert_train/bert_config_${train_dataset_name}_${dim}.json \
     --batch_size=${batch_size} \
     --max_seq_length=${max_seq_length} \
     --max_predictions_per_seq=${max_predictions_per_seq} \
