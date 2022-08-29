@@ -3,15 +3,15 @@ BERT4rec_HOME_DIR=${BERT4rec_HOME_DIR}
 CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
 train_dataset_name="BERT4REC_yoochoose-clicks-100k_train_full"
 test_dataset_name="BERT4REC_yoochoose-clicks-100k_test"
-max_seq_length=50
-max_predictions_per_seq=1
+max_seq_length=20
+max_predictions_per_seq=4
 #max_predictions_per_seq=30
-masked_lm_prob=0.3
+masked_lm_prob=0.41
 #masked_lm_prob=0.6
 
-dim=64
-batch_size=256
-num_train_steps=5000
+dim=100
+batch_size=8
+num_train_steps=400000
 
 mask_prob=1.0
 prop_sliding_window=0.1
