@@ -125,6 +125,7 @@ parser.add_argument("--user_history_filename", default=None, type=str, help="use
 parser.add_argument("--save_predictions_file", default=None, type=str, help="save predictions into file")
 parser.add_argument("--predictions_per_user", default=1000, type=int, help="number of predictions to save into file")
 parser.add_argument("--training-time-limit-seconds", default=None, type=int, help="training will stop after N seconds")
+parser.add_argument("--eval_split_output", default=None, type=str, help="Need for storing ndcg@20 for all splits in kFold cross validation")
 FLAGS=parser.parse_args()
 
 output_file = None
@@ -171,6 +172,8 @@ class EvalHooks(tf.estimator.SessionRunHook):
             self.probability = [value / sum_value for value in values]
 
     def end(self, session):
+        with open(FLAGS.eval_split_output, 'a+') as f:
+            f.write(str(self.ndcg_20))
         print(
             "ndcg@1:{}, hit@1:{}， ndcg@5:{}, hit@5:{}, ndcg@10:{}, hit@10:{}, ap:{}, valid_user:{}, ndcg@20:{}, hit@20:{}".
             format(self.ndcg_1 / self.valid_user, self.hit_1 / self.valid_user,
