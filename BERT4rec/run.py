@@ -38,7 +38,7 @@ parser = ArgumentParser()
 parser.add_argument(
     "--bert_config_file", default=None,
     help="The config json file corresponding to the pre-trained BERT model. "
-    "This specifies the model architecture.", required=True, 
+    "This specifies the model architecture.", required=True,
     type=str)
 
 parser.add_argument(
@@ -96,7 +96,7 @@ parser.add_argument("--max_eval_steps", default=1000, type=int, help="Maximum nu
 parser.add_argument("--use_tpu", default=False, type=bool, help="Whether to use TPU or GPU/CPU.")
 
 parser.add_argument(
-    "--tpu_name", default=None, type=str, 
+    "--tpu_name", default=None, type=str,
     help="The Cloud TPU to use for training. This should be either the name "
     "used when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 "
     "url.")
@@ -173,7 +173,7 @@ class EvalHooks(tf.estimator.SessionRunHook):
 
     def end(self, session):
         with open(FLAGS.eval_split_output, 'a+') as f:
-            f.write(str(self.ndcg_20))
+            f.write(str(self.ndcg_20 / self.valid_user) + "\n")
         print(
             "ndcg@1:{}, hit@1:{}， ndcg@5:{}, hit@5:{}, ndcg@10:{}, hit@10:{}, ap:{}, valid_user:{}, ndcg@20:{}, hit@20:{}".
             format(self.ndcg_1 / self.valid_user, self.hit_1 / self.valid_user,
@@ -303,7 +303,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
             input_mask=input_mask,
             token_type_ids=None,
             use_one_hot_embeddings=use_one_hot_embeddings)
-        
+
 #         all_user_and_item = model.get_embedding_table()
 #         item_ids = [i for i in range(0, item_size + 1)]
 #         softmax_output_embedding = tf.nn.embedding_lookup(all_user_and_item, item_ids)
@@ -577,7 +577,7 @@ def main(_):
     run_config = tf.estimator.RunConfig(
         model_dir=FLAGS.checkpointDir,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps)
-    
+
     if FLAGS.vocab_filename is not None:
         with open(FLAGS.vocab_filename, 'rb') as input_file:
             vocab = pickle.load(input_file)

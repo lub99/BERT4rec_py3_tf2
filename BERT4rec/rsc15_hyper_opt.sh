@@ -5,12 +5,6 @@ dataset_name="rsc15"
 max_predictions_per_seq=10
 masked_lm_prob=0.5
 
-
-#max_seq_length=20
-#max_predictions_per_seq=30
-#masked_lm_prob=0.6
-#batch_size=8
-
 dim=100
 num_train_steps=200
 
@@ -39,12 +33,8 @@ for batch_size in 8 16 32 64; do
       --num_train_steps=${num_train_steps} \
       --num_warmup_steps=100 \
       --learning_rate=1e-4 \
-      --eval_split_output=./data/train/max_seq_length-${max_seq_length}/batch_size${batch_size}_eval.txt
+      --eval_split_output=./data/${dataset_name}/train/max_seq_length-${max_seq_length}/batch_size${batch_size}_eval.txt
     done
   done
 done
 
-
-#todo dodati spremanje ndcg@20 u eval.txt
-
-#todo dodati generiranje datasetova sa splitovima po imenima direktorija ovdje navedeni

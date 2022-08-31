@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument("--pool_size", default=10, help="multiprocesses pool size.", type=int)
     parser.add_argument("--max_seq_length", default=200, help="max sequence length", type=int)
     parser.add_argument("--max_predictions_per_seq", default=20, help="max_predictions_per_seq.", type=int)
+    parser.add_argument("--k_fold", default=5, help="Number of folds for k fold cross validation.", type=int)
     parser.add_argument("--masked_lm_prob", default=0.15, help="Masked LM probability.", type=float)
     parser.add_argument("--mask_prob", default=1.0, help="mask probability", type=float)
     parser.add_argument("--dupe_factor", default=10,
@@ -474,22 +475,11 @@ def main():
         'user_' + str(k): ['item_' + str(item) for item in v]
         for k, v in user_train.items() if len(v) > 1  # min one item and [mask]
     }
-    user_test_data = {
-        'user_' + str(u):
-            ['item_' + str(item) for item in user_test[u]]
-        for u in user_test if len(user_test[u]) > 1  # min one item and [mask]
-    }
     rng = random.Random(random_seed)
-
-    # vocab = FreqVocab(user_train_data | user_test_data)  #
-    # user_test_data_output = {
-    #     k: [vocab.convert_tokens_to_ids(v)]
-    #     for k, v in user_test_data.items()
-    # }
 
     ## podijeli train na 5 dijelova
     dataset_name = FLAGS.dataset_name
-    n_folds = 5
+    n_folds = FLAGS.k_fold
     kFoldOutputDir = output_dir + dataset_name + "/train/" + "max_seq_length-" + str(max_seq_length) + "/"
     kfold = KFold(n_splits=n_folds, shuffle=True)
     fold_index = 1
@@ -501,7 +491,7 @@ def main():
         vocab = FreqVocab(train_data | test_data)  #
         user_test_data_output = {
             k: [vocab.convert_tokens_to_ids(v)]
-            for k, v in user_test_data.items()
+            for k, v in test_data.items()
         }
 
         fold_id = "_split-" + str(fold_index)
@@ -530,20 +520,6 @@ def main():
         print('done.')
 
         fold_index += 1
-
-    # print('begin to generate train')
-    # output_filename = output_dir + train_dataset_name + version_id + '.train.tfrecord'
-    # gen_samples(user_train_data, output_filename, rng, vocab, max_seq_length, dupe_factor, mask_prob, masked_lm_prob,
-    #             max_predictions_per_seq, prop_sliding_window, pool_size, force_last=False)  # in training force last
-    # print('train:{}'.format(output_filename))
-
-    # print('begin to generate test')
-    # output_filename = output_dir + train_dataset_name + version_id + '.test.tfrecord'
-    # gen_samples(user_test_data, output_filename, rng, vocab, max_seq_length, dupe_factor, mask_prob, masked_lm_prob,
-    #             max_predictions_per_seq, -1.0, pool_size, force_last=True)
-    # print('test:{}'.format(output_filename))
-
-
 
 
 if __name__ == "__main__":
