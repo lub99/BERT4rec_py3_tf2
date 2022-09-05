@@ -1,8 +1,8 @@
 #set "BERT4rec_HOME_DIR" as env variable in your shell!!!!!
 BERT4rec_HOME_DIR=${BERT4rec_HOME_DIR}
 CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
-train_dataset_name="rsc15-clicks_train_full.4"
-test_dataset_name="rsc15-clicks_test.4"
+train_dataset_name="BERT4REC_yoochoose-clicks-100k_train_full"
+test_dataset_name="BERT4REC_yoochoose-clicks-100k_test"
 max_seq_length=10
 max_predictions_per_seq=10
 #max_predictions_per_seq=30
@@ -11,7 +11,7 @@ masked_lm_prob=0.5
 
 dim=100
 batch_size=16
-num_train_steps=400000
+num_train_steps=300
 
 mask_prob=1.0
 prop_sliding_window=0.1
@@ -20,7 +20,7 @@ pool_size=10
 
 signature="-mp${mask_prob}-sw${prop_sliding_window}-mlp${masked_lm_prob}-df${dupe_factor}-mpps${max_predictions_per_seq}-msl${max_seq_length}"
 
-train_input_file=./data/rsc15/final/${train_dataset_name}${signature}.train.tfrecord
+train_input_file=./data/rsc15/100k/${train_dataset_name}${signature}.train.tfrecord
 if [ -f "$train_input_file" ]
 then
   echo "$train_input_file file already exist. No need for dataset construction!"
@@ -37,16 +37,16 @@ else
       --signature=${signature} \
       --pool_size=${pool_size} \
       --input_data_dir=./data/rsc15/input/ \
-      --output_data_dir=./data/rsc15/final/
+      --output_data_dir=./data/rsc15/100k/
       }
 fi
 
 
 python -u run.py \
-    --train_input_file=./data/rsc15/final/${train_dataset_name}${signature}.train.tfrecord \
-    --test_input_file=./data/rsc15/final/${train_dataset_name}${signature}.test.tfrecord \
-    --vocab_filename=./data/rsc15/final/${train_dataset_name}${signature}.vocab \
-    --user_history_filename=./data/rsc15/final/${train_dataset_name}${signature}.his \
+    --train_input_file=./data/rsc15/100k/${train_dataset_name}${signature}.train.tfrecord \
+    --test_input_file=./data/rsc15/100k/${train_dataset_name}${signature}.test.tfrecord \
+    --vocab_filename=./data/rsc15/100k/${train_dataset_name}${signature}.vocab \
+    --user_history_filename=./data/rsc15/100k/${train_dataset_name}${signature}.his \
     --checkpointDir=${BERT4rec_HOME_DIR}/results/${train_dataset_name} \
     --signature=${signature}-${dim} \
     --do_train=True \
@@ -58,5 +58,7 @@ python -u run.py \
     --num_train_steps=${num_train_steps} \
     --num_warmup_steps=100 \
     --learning_rate=1e-4 \
-    --test_results_output=./data/rsc15/final/result.txt \
-    --train_input_txt=./data/rsc15/input/rsc15-clicks_train_full.4.txt
+    --test_results_output=./data/rsc15/100k/result.txt \
+    --train_input_txt=./data/rsc15/input/BERT4REC_yoochoose-clicks-100k_train_full.txt \
+    --save_predictions_file=./data/rsc15/100k/recommendations.txt \
+    --predictions_per_user=20

@@ -180,11 +180,25 @@ class EvalHooks(tf.estimator.SessionRunHook):
             self.probability = [value / sum_value for value in values]
 
         if FLAGS.train_input_txt is not None:
-            data = pd.read_csv(FLAGS.train_input_txt, sep="\t", header=None)
-            data.columns = ["a", "b", "c", "etc."]
+            train = pd.read_csv(FLAGS.train_input_txt, sep=" ", header=None)
+            train.columns = ["sid", "iid"]
+            # group the data by the itemIds
+            grp = train.groupby("iid")
+            # count the occurence of every itemid in the training dataset
+            self.pop_scores = grp.size()
+            # sort it according to the  score
+            self.pop_scores.sort_values(ascending=False, inplace=True)
+            # normalize
+            self.pop_scores = self.pop_scores / self.pop_scores[:1].values[0]
+            self.popularity_sum_20 = 0
+
+
+            ## for coverage
+            self.all_ever_recommended_items_20 = set()
+            self.items_count_train = grp.ngroups
 
     def end(self, session):
-        all_results_str = "ndcg@1:{}, hit@1:{}， ndcg@5:{}, hit@5:{}, ndcg@10:{}, hit@10:{}, mrr@10:{}, ap:{}, valid_user:{}, ndcg@20:{}, hit@20:{}, mrr@20:{}".format(
+        all_results_str = "ndcg@1:{}, hit@1:{}， ndcg@5:{}, hit@5:{}, ndcg@10:{}, hit@10:{}, mrr@10:{}, ap:{}, valid_user:{}, ndcg@20:{}, hit@20:{}, mrr@20:{}, pop@20:{}, cov@20:{}".format(
             self.ndcg_1 / self.valid_user,
             self.hit_1 / self.valid_user,
             self.ndcg_5 / self.valid_user,
@@ -196,7 +210,9 @@ class EvalHooks(tf.estimator.SessionRunHook):
             self.valid_user,
             self.ndcg_20 / self.valid_user,
             self.hit_20 / self.valid_user,
-            self.mrr_20 / self.valid_user
+            self.mrr_20 / self.valid_user,
+            self.popularity_sum_20 / self.valid_user,
+            len(self.all_ever_recommended_items_20) / self.items_count_train
         )
         print(all_results_str)
 
@@ -257,6 +273,13 @@ class EvalHooks(tf.estimator.SessionRunHook):
 
             predictions = -masked_lm_log_probs_elem[item_idx]
             rank = predictions.argsort().argsort()[0]
+
+
+            scores = masked_lm_log_probs_elem
+            predicted_items = np.argsort(scores)[-20:][::-1]
+            items_ids = [ int(self.vocab.convert_ids_to_tokens([pred])[0].split("_")[1]) for pred in predicted_items]
+            self.popularity_sum_20 += (self.pop_scores[self.pop_scores.index.intersection(items_ids)].sum() / 20)
+            self.all_ever_recommended_items_20.update(items_ids)
 
             self.valid_user += 1
 
