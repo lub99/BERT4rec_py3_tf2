@@ -31,6 +31,7 @@ import numpy as np
 import sys
 import pickle
 from argparse import ArgumentParser
+import  pandas as pd
 
 ## Required parameters
 parser = ArgumentParser()
@@ -44,6 +45,9 @@ parser.add_argument(
 parser.add_argument(
     "--train_input_file", default=None,
     help="Input TF example files (can be a glob or comma separated).", type=str)
+parser.add_argument(
+    "--train_input_txt", default=None,
+    help="Train input file need for coverage and popularity calculation in evaluation.", type=str)
 
 parser.add_argument(
     "--test_input_file", default=None,
@@ -174,6 +178,10 @@ class EvalHooks(tf.estimator.SessionRunHook):
             sum_value = np.sum([x for x in values])
             # print(sum_value)
             self.probability = [value / sum_value for value in values]
+
+        if FLAGS.train_input_txt is not None:
+            data = pd.read_csv(FLAGS.train_input_txt, sep="\t", header=None)
+            data.columns = ["a", "b", "c", "etc."]
 
     def end(self, session):
         all_results_str = "ndcg@1:{}, hit@1:{}， ndcg@5:{}, hit@5:{}, ndcg@10:{}, hit@10:{}, mrr@10:{}, ap:{}, valid_user:{}, ndcg@20:{}, hit@20:{}, mrr@20:{}".format(

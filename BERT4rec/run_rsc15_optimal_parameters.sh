@@ -58,4 +58,5 @@ python -u run.py \
     --num_train_steps=${num_train_steps} \
     --num_warmup_steps=100 \
     --learning_rate=1e-4 \
-    --test_results_output=./data/rsc15/final/result.txt
+    --test_results_output=./data/rsc15/final/result.txt \
+    --train_input_txt=./data/rsc15/input/rsc15-clicks_train_full.txt
