@@ -1,7 +1,7 @@
 if __name__ == '__main__':
     dataset_name = "rsc15"
-    max_seq_lengths = [10, 20]
-    batch_sizes = [8]
+    max_seq_lengths = [10, 30, 50]
+    batch_sizes = [16, 32]
 
     hyper_param_dir = "./data/" + dataset_name + "/train/"
     max_avg_ndcg = -1

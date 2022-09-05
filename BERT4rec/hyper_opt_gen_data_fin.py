@@ -6,7 +6,7 @@ import random
 import tensorflow as tf
 from sklearn.model_selection import KFold
 
-from util import *
+from hyper_util import *
 from vocab import *
 import pickle
 import multiprocessing
@@ -444,31 +444,31 @@ def main():
     prop_sliding_window = FLAGS.prop_sliding_window
     pool_size = FLAGS.pool_size
 
-    output_dir = FLAGS.data_dir
+
+    input_dir = FLAGS.data_dir + FLAGS.dataset_name + "/input/"
     train_dataset_name = FLAGS.train_dataset_name
     version_id = FLAGS.signature
     print(version_id)
 
-    if not os.path.isdir(output_dir):
-        print(output_dir + ' is not exist')
+    if not os.path.isdir(input_dir):
+        print(input_dir + ' is not exist')
         print(os.getcwd())
         exit(1)
 
-    dataset = data_partition(output_dir + train_dataset_name + '.txt', "valid",
-                             output_dir + FLAGS.test_dataset_name + '.txt')
+    dataset = data_partition(input_dir + train_dataset_name + '.txt', input_dir + FLAGS.test_dataset_name + '.txt')
     [user_train, user_test, usernum, itemnum] = dataset
-    cc = 0.0
-    max_len = 0
-    min_len = 100000
-    for u in user_train:
-        cc += len(user_train[u])
-        max_len = max(len(user_train[u]), max_len)
-        min_len = min(len(user_train[u]), min_len)
-
-    print('average sequence length: %.2f' % (cc / len(user_train)))
-    print('max:{}, min:{}'.format(max_len, min_len))
+    # cc = 0.0
+    # max_len = 0
+    # min_len = 100000
+    # for u in user_train:
+    #     cc += len(user_train[u])
+    #     max_len = max(len(user_train[u]), max_len)
+    #     min_len = min(len(user_train[u]), min_len)
+    #
+    # print('average sequence length: %.2f' % (cc / len(user_train)))
+    # print('max:{}, min:{}'.format(max_len, min_len))
     print(
-        f"len_train:{len(user_train)}, len_test:{len(user_test)}, train_session_num:{usernum}, train_itemnum:{itemnum}")
+        f"train_sessions_num:{len(user_train)}, test_session_num:{len(user_test)}, train_session_num:{usernum}, dataset_unique_item_num:{itemnum}")
 
     # get the max index of the data
     user_train_data = {
@@ -480,13 +480,21 @@ def main():
     ## podijeli train na 5 dijelova
     dataset_name = FLAGS.dataset_name
     n_folds = FLAGS.k_fold
-    kFoldOutputDir = output_dir + dataset_name + "/train/" + "max_seq_length-" + str(max_seq_length) + "/"
+    output_dir = FLAGS.data_dir + FLAGS.dataset_name + "/train/"
+    kFoldOutputDir = output_dir + "max_seq_length-" + str(max_seq_length) + "/"
+
+    print(kFoldOutputDir)
     kfold = KFold(n_splits=n_folds, shuffle=True)
     fold_index = 1
     for train, test in kfold.split(user_train_data):
         print("*****WORKING ON FOLD " + str(fold_index) + "*****")
-        train_data = {"user_" + str(index_train+1): user_train_data["user_" + str(index_train + 1)] for index_train in train}
-        test_data = {"user_" + str(index_test + 1): user_train_data["user_" + str(index_test + 1)] for index_test in test}
+        # train_data = {"user_" + str(index_train+1): user_train_data["user_" + str(index_train + 1)] for index_train in train}
+        # test_data = {"user_" + str(index_test + 1): user_train_data["user_" + str(index_test + 1)] for index_test in test}
+
+        train = ["user_" + str(tr + 1) for tr in train]
+        test  = ["user_" + str(tr + 1) for tr in test]
+        train_data = {k: user_train_data[k] for k in set(user_train_data).intersection(train)}
+        test_data = {k: user_train_data[k] for k in set(user_train_data).intersection(test)}
 
         vocab = FreqVocab(train_data | test_data)  #
         user_test_data_output = {

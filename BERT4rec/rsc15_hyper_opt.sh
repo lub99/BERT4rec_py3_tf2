@@ -6,14 +6,14 @@ max_predictions_per_seq=10
 masked_lm_prob=0.5
 
 dim=100
-num_train_steps=200
+num_train_steps=100000
 
 mask_prob=1.0
 prop_sliding_window=0.1
 dupe_factor=10
 
-for batch_size in 8 16 32 64; do
-  for max_seq_length in 10 20 30; do
+for batch_size in 16 32; do
+  for max_seq_length in 10 30 50; do
     for index in {1..5}; do
       signature="-mp${mask_prob}-sw${prop_sliding_window}-mlp${masked_lm_prob}-df${dupe_factor}-mpps${max_predictions_per_seq}"
       additional_props="msl${max_seq_length}-test_split${index}-batch_size${batch_size}"

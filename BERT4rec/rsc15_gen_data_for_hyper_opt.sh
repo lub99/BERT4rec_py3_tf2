@@ -2,8 +2,8 @@
 BERT4rec_HOME_DIR=${BERT4rec_HOME_DIR}
 CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
 dataset_name="rsc15"
-train_dataset_name="BERT4REC_yoochoose-clicks-100k_train_full"
-test_dataset_name="BERT4REC_yoochoose-clicks-100k_test"
+train_dataset_name="rsc15-clicks_train_full.4"
+test_dataset_name="rsc15-clicks_test.4"
 max_predictions_per_seq=10
 masked_lm_prob=0.5
 
@@ -11,13 +11,13 @@ masked_lm_prob=0.5
 mask_prob=1.0
 prop_sliding_window=0.1
 dupe_factor=10
-pool_size=10
+pool_size=20
 k_fold=5
 
 signature="-mp${mask_prob}-sw${prop_sliding_window}-mlp${masked_lm_prob}-df${dupe_factor}-mpps${max_predictions_per_seq}"
 
 
-for max_seq_length in 10 20 30; do
+for max_seq_length in 10 30 50; do
     train_input_file=./data/${dataset_name}/train/max_seq_length-${max_seq_length}/${dataset_name}${signature}_split-5.train.tfrecord
     if [ -f "$train_input_file" ]
     then
