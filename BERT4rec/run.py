@@ -38,7 +38,7 @@ parser = ArgumentParser()
 parser.add_argument(
     "--bert_config_file", default=None,
     help="The config json file corresponding to the pre-trained BERT model. "
-    "This specifies the model architecture.", required=True,
+         "This specifies the model architecture.", required=True,
     type=str)
 
 parser.add_argument(
@@ -63,24 +63,24 @@ parser.add_argument(
 parser.add_argument(
     "--max_seq_length", default=128, type=int,
     help="The maximum total input sequence length after WordPiece tokenization. "
-    "Sequences longer than this will be truncated, and sequences shorter "
-    "than this will be padded. Must match data generation.")
+         "Sequences longer than this will be truncated, and sequences shorter "
+         "than this will be padded. Must match data generation.")
 
 parser.add_argument("--max_predictions_per_seq", default=20, type=int,
-                     help="Maximum number of masked LM predictions per sequence. "
-                     "Must match data generation.")
+                    help="Maximum number of masked LM predictions per sequence. "
+                         "Must match data generation.")
 
 parser.add_argument("--do_train", default=False, type=bool, help="Whether to run training.")
 
 parser.add_argument("--do_eval", default=False, type=bool, help="Whether to run eval on the dev set.")
 
-#flags.DEFINE_integer("train_batch_size", 32, "Total batch size for training.")
+# flags.DEFINE_integer("train_batch_size", 32, "Total batch size for training.")
 parser.add_argument("--batch_size", default=32, type=bool, help="Total batch size for training.")
 
-#flags.DEFINE_integer("eval_batch_size", 1, "Total batch size for eval.")
+# flags.DEFINE_integer("eval_batch_size", 1, "Total batch size for eval.")
 
 parser.add_argument("--learning_rate", default=5e-5, type=float,
-                   help="The initial learning rate for Adam.")
+                    help="The initial learning rate for Adam.")
 
 parser.add_argument("--num_train_steps", default=100000, type=int, help="Number of training steps.")
 
@@ -88,30 +88,30 @@ parser.add_argument("--num_warmup_steps", default=10000, type=int, help="Number 
 
 parser.add_argument("--save_checkpoints_steps", default=1000, type=int, help="How often to save the model checkpoint.")
 
-parser.add_argument("--iterations_per_loop", default=1000, type=int, help="How many steps to make in each estimator call.")
+parser.add_argument("--iterations_per_loop", default=1000, type=int,
+                    help="How many steps to make in each estimator call.")
 
 parser.add_argument("--max_eval_steps", default=1000, type=int, help="Maximum number of eval steps.")
-
 
 parser.add_argument("--use_tpu", default=False, type=bool, help="Whether to use TPU or GPU/CPU.")
 
 parser.add_argument(
     "--tpu_name", default=None, type=str,
     help="The Cloud TPU to use for training. This should be either the name "
-    "used when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 "
-    "url.")
+         "used when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 "
+         "url.")
 
 parser.add_argument(
     "--tpu_zone", default=None, type=str,
     help="[Optional] GCE zone where the Cloud TPU is located in. If not "
-    "specified, we will attempt to automatically detect the GCE project from "
-    "metadata.")
+         "specified, we will attempt to automatically detect the GCE project from "
+         "metadata.")
 
 parser.add_argument(
     "--gcp_project", default=None, type=str,
     help="[Optional] Project name for the Cloud TPU-enabled project. If not "
-    "specified, we will attempt to automatically detect the GCE project from "
-    "metadata.")
+         "specified, we will attempt to automatically detect the GCE project from "
+         "metadata.")
 
 parser.add_argument("--master", default=None, type=str, help="[Optional] TensorFlow master URL.")
 
@@ -125,8 +125,10 @@ parser.add_argument("--user_history_filename", default=None, type=str, help="use
 parser.add_argument("--save_predictions_file", default=None, type=str, help="save predictions into file")
 parser.add_argument("--predictions_per_user", default=1000, type=int, help="number of predictions to save into file")
 parser.add_argument("--training-time-limit-seconds", default=None, type=int, help="training will stop after N seconds")
-parser.add_argument("--eval_split_output", default=None, type=str, help="Need for storing ndcg@20 for all splits in kFold cross validation")
-FLAGS=parser.parse_args()
+parser.add_argument("--eval_split_output", default=None, type=str,
+                    help="Need for storing ndcg@20 for all splits in kFold cross validation")
+parser.add_argument("--test_results_output", default=None, type=str, help="Store results of all metrics to file")
+FLAGS = parser.parse_args()
 
 output_file = None
 
@@ -147,6 +149,8 @@ class EvalHooks(tf.estimator.SessionRunHook):
         self.ndcg_20 = 0.0
         self.hit_20 = 0.0
         self.ap = 0.0
+        self.mrr_10= 0.0
+        self.mrr_20= 0.0
 
         np.random.seed(12345)
 
@@ -172,17 +176,29 @@ class EvalHooks(tf.estimator.SessionRunHook):
             self.probability = [value / sum_value for value in values]
 
     def end(self, session):
-        with open(FLAGS.eval_split_output, 'a+') as f:
-            f.write(str(self.ndcg_20 / self.valid_user) + "\n")
-        print(
-            "ndcg@1:{}, hit@1:{}， ndcg@5:{}, hit@5:{}, ndcg@10:{}, hit@10:{}, ap:{}, valid_user:{}, ndcg@20:{}, hit@20:{}".
-            format(self.ndcg_1 / self.valid_user, self.hit_1 / self.valid_user,
-                   self.ndcg_5 / self.valid_user, self.hit_5 / self.valid_user,
-                   self.ndcg_10 / self.valid_user,
-                   self.hit_10 / self.valid_user, self.ap / self.valid_user,
-                   self.valid_user,
-                   self.ndcg_20 / self.valid_user,
-                   self.hit_20 /self.valid_user))
+        all_results_str = "ndcg@1:{}, hit@1:{}， ndcg@5:{}, hit@5:{}, ndcg@10:{}, hit@10:{}, mrr@10:{}, ap:{}, valid_user:{}, ndcg@20:{}, hit@20:{}, mrr@20:{}".format(
+            self.ndcg_1 / self.valid_user,
+            self.hit_1 / self.valid_user,
+            self.ndcg_5 / self.valid_user,
+            self.hit_5 / self.valid_user,
+            self.ndcg_10 / self.valid_user,
+            self.hit_10 / self.valid_user,
+            self.mrr_10 / self.valid_user,
+            self.ap / self.valid_user,
+            self.valid_user,
+            self.ndcg_20 / self.valid_user,
+            self.hit_20 / self.valid_user,
+            self.mrr_20 / self.valid_user
+        )
+        print(all_results_str)
+
+        if FLAGS.eval_split_output is not None:
+            with open(FLAGS.eval_split_output, 'a+') as f:
+                f.write(str(self.ndcg_20 / self.valid_user) + "\n")
+
+        if FLAGS.test_results_output is not None:
+            with open(FLAGS.test_results_output, 'a+') as f:
+                f.write(all_results_str)
 
     def before_run(self, run_context):
         variables = tf.compat.v1.get_collection('eval_sp')
@@ -207,7 +223,6 @@ class EvalHooks(tf.estimator.SessionRunHook):
                     except IndexError:
                         continue
                 output_file.write("\n")
-
 
         for idx in range(len(input_ids)):
             rated = set(input_ids[idx])
@@ -241,6 +256,7 @@ class EvalHooks(tf.estimator.SessionRunHook):
                 print('.', end='')
                 sys.stdout.flush()
 
+            # rank goes from 0 like list index
             if rank < 1:
                 self.ndcg_1 += 1
                 self.hit_1 += 1
@@ -250,11 +266,14 @@ class EvalHooks(tf.estimator.SessionRunHook):
             if rank < 10:
                 self.ndcg_10 += 1 / np.log2(rank + 2)
                 self.hit_10 += 1
+                self.mrr_10 += 1 / (rank + 1)
             if rank < 20:
                 self.ndcg_20 += 1 / np.log2(rank + 2)
                 self.hit_20 += 1
+                self.mrr_20 += 1 / (rank + 1)
 
             self.ap += 1.0 / (rank + 1)
+
 
 class TrainHooks(tf.estimator.SessionRunHook):
     def __init__(self, time_limit):
@@ -264,14 +283,12 @@ class TrainHooks(tf.estimator.SessionRunHook):
         self.training_start_time = time.time()
 
     def after_run(self,
-                run_context,  # pylint: disable=unused-argument
-                run_values):
+                  run_context,  # pylint: disable=unused-argument
+                  run_values):
         training_time = time.time() - self.training_start_time
         if self.time_limit is not None and training_time >= self.time_limit:
             tf.compat.v1.logging.info(f"time limit: stopping training after {training_time} seconds")
             raise StopIteration()
-
-
 
 
 def model_fn_builder(bert_config, init_checkpoint, learning_rate,
@@ -285,7 +302,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
         tf.compat.v1.logging.info("*** Features ***")
         for name in sorted(features.keys()):
             tf.compat.v1.logging.info("  name = %s, shape = %s" % (name,
-                                                         features[name].shape))
+                                                                   features[name].shape))
 
         info = features["info"]
         input_ids = features["input_ids"]
@@ -304,16 +321,16 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
             token_type_ids=None,
             use_one_hot_embeddings=use_one_hot_embeddings)
 
-#         all_user_and_item = model.get_embedding_table()
-#         item_ids = [i for i in range(0, item_size + 1)]
-#         softmax_output_embedding = tf.nn.embedding_lookup(all_user_and_item, item_ids)
+        #         all_user_and_item = model.get_embedding_table()
+        #         item_ids = [i for i in range(0, item_size + 1)]
+        #         softmax_output_embedding = tf.nn.embedding_lookup(all_user_and_item, item_ids)
 
         (masked_lm_loss,
          masked_lm_example_loss, masked_lm_log_probs) = get_masked_lm_output(
-             bert_config,
-             model.get_sequence_output(),
-             model.get_embedding_table(), masked_lm_positions, masked_lm_ids,
-             masked_lm_weights)
+            bert_config,
+            model.get_sequence_output(),
+            model.get_embedding_table(), masked_lm_positions, masked_lm_ids,
+            masked_lm_weights)
 
         total_loss = masked_lm_loss
 
@@ -324,12 +341,12 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
         if init_checkpoint:
             (assignment_map, initialized_variable_names
              ) = modeling.get_assignment_map_from_checkpoint(
-                 tvars, init_checkpoint)
+                tvars, init_checkpoint)
             if use_tpu:
 
                 def tpu_scaffold():
                     tf.compat.v1.train.init_from_checkpoint(init_checkpoint,
-                                                  assignment_map)
+                                                            assignment_map)
                     return tf.compat.v1.train.Scaffold()
 
                 scaffold_fn = tpu_scaffold
@@ -342,7 +359,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
             if var.name in initialized_variable_names:
                 init_string = ", *INIT_FROM_CKPT*"
             tf.compat.v1.logging.info("  name = %s, shape = %s%s", var.name, var.shape,
-                            init_string)
+                                      init_string)
 
         output_spec = None
         if mode == tf.estimator.ModeKeys.TRAIN:
@@ -479,17 +496,17 @@ def input_fn_builder(input_files,
 
         name_to_features = {
             "info":
-            tf.io.FixedLenFeature([1], tf.int64),  #[user]
+                tf.io.FixedLenFeature([1], tf.int64),  # [user]
             "input_ids":
-            tf.io.FixedLenFeature([max_seq_length], tf.int64),
+                tf.io.FixedLenFeature([max_seq_length], tf.int64),
             "input_mask":
-            tf.io.FixedLenFeature([max_seq_length], tf.int64),
+                tf.io.FixedLenFeature([max_seq_length], tf.int64),
             "masked_lm_positions":
-            tf.io.FixedLenFeature([max_predictions_per_seq], tf.int64),
+                tf.io.FixedLenFeature([max_predictions_per_seq], tf.int64),
             "masked_lm_ids":
-            tf.io.FixedLenFeature([max_predictions_per_seq], tf.int64),
+                tf.io.FixedLenFeature([max_predictions_per_seq], tf.int64),
             "masked_lm_weights":
-            tf.io.FixedLenFeature([max_predictions_per_seq], tf.float32)
+                tf.io.FixedLenFeature([max_predictions_per_seq], tf.float32)
         }
 
         # For training, we want a lot of parallel reading and shuffling.
@@ -500,19 +517,18 @@ def input_fn_builder(input_files,
             d = d.shuffle(buffer_size=100)
 
             # `cycle_length` is the number of parallel files that get read.
-            #cycle_length = min(num_cpu_threads, len(input_files))
+            # cycle_length = min(num_cpu_threads, len(input_files))
 
             # `sloppy` mode means that the interleaving is not exact. This adds
             # even more randomness to the training pipeline.
-            #d = d.apply(
+            # d = d.apply(
             #    tf.contrib.data.parallel_interleave(
             #        tf.data.TFRecordDataset,
             #        sloppy=is_training,
             #        cycle_length=cycle_length))
-            #d = d.shuffle(buffer_size=100)
+            # d = d.shuffle(buffer_size=100)
         else:
             d = tf.data.TFRecordDataset(input_files)
-
 
         d = d.map(
             lambda record: _decode_record(record, name_to_features),
@@ -573,7 +589,7 @@ def main(_):
 
     tpu_cluster_resolver = None
 
-    #is_per_host = tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2
+    # is_per_host = tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2
     run_config = tf.estimator.RunConfig(
         model_dir=FLAGS.checkpointDir,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps)
@@ -612,7 +628,7 @@ def main(_):
             is_training=True)
         estimator.train(
             input_fn=train_input_fn, max_steps=FLAGS.num_train_steps,
-                     hooks=[TrainHooks(FLAGS.training_time_limit_seconds)])
+            hooks=[TrainHooks(FLAGS.training_time_limit_seconds)])
 
     if FLAGS.do_eval:
         tf.compat.v1.logging.info("***** Running evaluation *****")
@@ -624,7 +640,7 @@ def main(_):
             max_predictions_per_seq=FLAGS.max_predictions_per_seq,
             is_training=False)
 
-        #tf.logging.info('special eval ops:', special_eval_ops)
+        # tf.logging.info('special eval ops:', special_eval_ops)
         result = estimator.evaluate(
             input_fn=eval_input_fn,
             steps=None,
@@ -635,7 +651,7 @@ def main(_):
         with tf.io.gfile.GFile(output_eval_file, "w") as writer:
             tf.compat.v1.logging.info("***** Eval results *****")
             tf.compat.v1.logging.info(bert_config.to_json_string())
-            writer.write(bert_config.to_json_string()+'\n')
+            writer.write(bert_config.to_json_string() + '\n')
             for key in sorted(result.keys()):
                 tf.compat.v1.logging.info("  %s = %s", key, str(result[key]))
                 writer.write("%s = %s\n" % (key, str(result[key])))

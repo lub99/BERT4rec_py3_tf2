@@ -27,7 +27,8 @@ def parse_args():
     parser.add_argument("--dupe_factor", default=10,
                         help="Number of times to duplicate the input data (with different masks).", type=int)
     parser.add_argument("--prop_sliding_window", default=0.1, help="sliding window step size.", type=float)
-    parser.add_argument("--data_dir", default='./data/', help="data dir.", type=str)
+    parser.add_argument("--input_data_dir", default='./data/', help="data dir.", type=str)
+    parser.add_argument("--output_data_dir", default='./data/', help="data dir.", type=str)
     parser.add_argument("--train_dataset_name", default='./ml-1m/', help="train dataset name.", type=str)
     parser.add_argument("--valid_dataset_name", default='./ml-1m/', help="valid dataset name.", type=str)
     parser.add_argument("--test_dataset_name", default='./ml-1m/', help="test dataset name.", type=str)
@@ -432,18 +433,19 @@ def main():
     prop_sliding_window = FLAGS.prop_sliding_window
     pool_size = FLAGS.pool_size
 
-    output_dir = FLAGS.data_dir
+    output_dir = FLAGS.output_data_dir
+    input_dir = FLAGS.input_data_dir
     train_dataset_name = FLAGS.train_dataset_name
     version_id = FLAGS.signature
     print(version_id)
 
-    if not os.path.isdir(output_dir):
-        print(output_dir + ' is not exist')
+    if not os.path.isdir(input_dir):
+        print(input_dir + ' is not exist')
         print(os.getcwd())
         exit(1)
 
-    dataset = data_partition(output_dir + train_dataset_name + '.txt', "valid",
-                             output_dir + FLAGS.test_dataset_name + '.txt')
+    dataset = data_partition(input_dir + train_dataset_name + '.txt', "valid",
+                             input_dir + FLAGS.test_dataset_name + '.txt')
     [user_train, user_test, usernum, itemnum] = dataset
     cc = 0.0
     max_len = 0
