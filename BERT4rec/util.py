@@ -1,33 +1,25 @@
 from __future__ import print_function
 from collections import defaultdict
-import re
 
 
-def data_partition(train_dataset_name, valid_dataset_name, test_dataset_name):
-    session_num = 0
+def data_partition(fname):
+    usernum = 0
     itemnum = 0
-    # User = defaultdict(list)
-    user_train = defaultdict(list)
-    user_valid = defaultdict(list)
-    user_test = defaultdict(list)
+    User = defaultdict(list)
+    user_train = {}
+    user_test = {}
     # assume user/item index starting from 1
-    with  open(train_dataset_name, 'r') as f:
-        for line in f:
-            sid, i = re.split("\s+", line.rstrip())
-            sid = int(sid)
-            i = int(i)
-            session_num = max(sid, session_num)
-            itemnum = max(i, itemnum)
+    f = open(fname, 'r')
+    for line in f:
+        u, i = line.rstrip().split(' ')
+        u = int(u)
+        i = int(i)
+        usernum = max(u, usernum)
+        itemnum = max(i, itemnum)
+        User[u].append(i)
 
-            user_train[sid].append(i)
-            # User[sid].append(i)
+    for user in User:
+        user_train[user] = User[user][:-1]
+        user_test[user] = [User[user][-1]]
+    return [user_train, user_test, usernum, itemnum]
 
-    with open(test_dataset_name, "r") as test:
-        for line in test:
-            sid, i = re.split("\s+", line.rstrip())
-            sid = int(sid)
-            i = int(i)
-
-            user_test[sid].append(i)
-
-    return [user_train, user_test, session_num, itemnum]

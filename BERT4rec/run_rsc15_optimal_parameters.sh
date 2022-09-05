@@ -25,7 +25,7 @@ if [ -f "$train_input_file" ]
 then
   echo "$train_input_file file already exist. No need for dataset construction!"
 else
-  { python -u gen_data_fin.py \
+  { python -u my_gen_data_fin.py \
       --train_dataset_name=${train_dataset_name} \
       --test_dataset_name=${test_dataset_name} \
       --max_seq_length=${max_seq_length} \

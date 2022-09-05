@@ -5,13 +5,12 @@ import random
 
 import tensorflow as tf
 
-from util import *
+from my_util import *
 from vocab import *
 import pickle
 import multiprocessing
 from argparse import ArgumentParser
 import time
-
 
 random_seed = 12345
 
@@ -28,11 +27,12 @@ def parse_args():
     parser.add_argument("--dupe_factor", default=10,
                         help="Number of times to duplicate the input data (with different masks).", type=int)
     parser.add_argument("--prop_sliding_window", default=0.1, help="sliding window step size.", type=float)
-    parser.add_argument("--data_dir", default='./data/', help="data dir.", type=str)
-    parser.add_argument("--dataset_name", default='./ml-1m/', help="dataset name.", type=str)
+    parser.add_argument("--input_data_dir", default='./data/', help="data dir.", type=str)
+    parser.add_argument("--output_data_dir", default='./data/', help="data dir.", type=str)
+    parser.add_argument("--train_dataset_name", default='./ml-1m/', help="train dataset name.", type=str)
+    parser.add_argument("--valid_dataset_name", default='./ml-1m/', help="valid dataset name.", type=str)
+    parser.add_argument("--test_dataset_name", default='./ml-1m/', help="test dataset name.", type=str)
     FLAGS = parser.parse_args()
-
-
 
 
 def printable_text(text):
@@ -42,6 +42,7 @@ def printable_text(text):
         return text.decode("utf-8", "ignore")
     else:
         raise ValueError("Unsupported string type: %s" % (type(text)))
+
 
 class TrainingInstance(object):
     """A single training instance (sentence pair)."""
@@ -122,8 +123,8 @@ def write_instance_to_example_file(instances, max_seq_length,
                 elif feature.float_list.value:
                     values = feature.float_list.value
                 tf.compat.v1.logging.info("%s: %s" % (feature_name,
-                                            " ".join([str(x)
-                                                      for x in values])))
+                                                      " ".join([str(x)
+                                                                for x in values])))
 
     writer.close()
     tf.compat.v1.logging.info("Wrote %d total instances", total_written)
@@ -162,7 +163,8 @@ def create_instances(all_documents, dupe_factor, force_last, mask_prob, masked_l
     return instances
 
 
-def create_instances_no_force_last(all_documents, dupe_factor, instances, mask_prob, masked_lm_prob, max_predictions_per_seq,
+def create_instances_no_force_last(all_documents, dupe_factor, instances, mask_prob, masked_lm_prob,
+                                   max_predictions_per_seq,
                                    max_seq_length, pool_size, vocab):
     start_time = time.process_time()
     pool = multiprocessing.Pool(processes=pool_size)
@@ -246,13 +248,14 @@ def create_instances_threading(all_documents, max_seq_length, masked_lm_prob, ma
     for user in all_documents:
         cnt += 1
         if cnt % 1000 == 0:
-            print("step: {}, name: {}, step: {}, time: {}".format(step, multiprocessing.current_process().name, cnt, time.process_time()-start_time))
+            print("step: {}, name: {}, step: {}, time: {}".format(step, multiprocessing.current_process().name, cnt,
+                                                                  time.process_time() - start_time))
             start_time = time.process_time()
         document = all_documents[user]
         info = [int(user.split("_")[1])]
         instances.extend(create_instances_from_document_train(document, info, max_seq_length, masked_lm_prob,
                                                               max_predictions_per_seq, vocab, rng, mask_prob))
-        
+
     return instances
 
 
@@ -260,13 +263,13 @@ def mask_last(all_documents, user, max_seq_length):
     """Creates `TrainingInstance`s for a single document."""
     document = all_documents[user]
     max_num_tokens = max_seq_length
-    
+
     instances = []
     info = [int(user.split("_")[1])]
 
     for tokens in document:
         assert len(tokens) >= 1 and len(tokens) <= max_num_tokens
-        
+
         (tokens, masked_lm_positions,
          masked_lm_labels) = create_masked_lm_predictions_force_last(tokens)
         instance = TrainingInstance(
@@ -282,9 +285,9 @@ def mask_last(all_documents, user, max_seq_length):
 def create_instances_from_document_test(document, info, max_seq_length):
     """Creates `TrainingInstance`s for a single document."""
     max_num_tokens = max_seq_length
-    
+
     assert len(document) == 1 and len(document[0]) <= max_num_tokens
-    
+
     tokens = document[0]
     assert len(tokens) >= 1
 
@@ -311,11 +314,11 @@ def create_instances_from_document_train(document, info, max_seq_length, masked_
 
     for tokens in document:
         assert len(tokens) >= 1 and len(tokens) <= max_num_tokens
-        
+
         (tokens, masked_lm_positions,
          masked_lm_labels) = create_masked_lm_predictions(
-             tokens, masked_lm_prob, max_predictions_per_seq,
-             vocab_items, rng, mask_prob)
+            tokens, masked_lm_prob, max_predictions_per_seq,
+            vocab_items, rng, mask_prob)
         instance = TrainingInstance(
             info=info,
             tokens=tokens,
@@ -388,7 +391,7 @@ def create_masked_lm_predictions(tokens, masked_lm_prob,
             # 10% of the time, replace with random word
             else:
                 # masked_token = vocab_words[rng.randint(0, len(vocab_words) - 1)]
-                masked_token = rng.choice(vocab_words)  
+                masked_token = rng.choice(vocab_words)
 
         output_tokens[index] = masked_token
 
@@ -430,17 +433,19 @@ def main():
     prop_sliding_window = FLAGS.prop_sliding_window
     pool_size = FLAGS.pool_size
 
-    output_dir = FLAGS.data_dir
-    dataset_name = FLAGS.dataset_name
+    output_dir = FLAGS.output_data_dir
+    input_dir = FLAGS.input_data_dir
+    train_dataset_name = FLAGS.train_dataset_name
     version_id = FLAGS.signature
     print(version_id)
 
-    if not os.path.isdir(output_dir):
-        print(output_dir + ' is not exist')
+    if not os.path.isdir(input_dir):
+        print(input_dir + ' is not exist')
         print(os.getcwd())
         exit(1)
 
-    dataset = data_partition(output_dir+dataset_name+'.txt')
+    dataset = data_partition(input_dir + train_dataset_name + '.txt', "valid",
+                             input_dir + FLAGS.test_dataset_name + '.txt')
     [user_train, user_test, usernum, itemnum] = dataset
     cc = 0.0
     max_len = 0
@@ -452,34 +457,34 @@ def main():
 
     print('average sequence length: %.2f' % (cc / len(user_train)))
     print('max:{}, min:{}'.format(max_len, min_len))
-    print(f"len_train:{len(user_train)}, len_test:{len(user_test)}, usernum:{usernum}, itemnum:{itemnum}")
+    print(f"len_train:{len(user_train)}, len_test:{len(user_test)}, train_session_num:{usernum}, train_itemnum:{itemnum}")
 
     # get the max index of the data
     user_train_data = {
         'user_' + str(k): ['item_' + str(item) for item in v]
-        for k, v in user_train.items() if len(v) > 0
+        for k, v in user_train.items() if len(v) > 1  # min one item and [mask]
     }
     user_test_data = {
         'user_' + str(u):
-            ['item_' + str(item) for item in (user_train[u] + user_test[u])]
-        for u in user_train if len(user_train[u]) > 0 and len(user_test[u]) > 0
+            ['item_' + str(item) for item in user_test[u]]
+        for u in user_test if len(user_test[u]) > 1  # min one item and [mask]
     }
     rng = random.Random(random_seed)
 
-    vocab = FreqVocab(user_test_data)
+    vocab = FreqVocab(user_train_data | user_test_data) #
     user_test_data_output = {
         k: [vocab.convert_tokens_to_ids(v)]
         for k, v in user_test_data.items()
     }
 
     print('begin to generate train')
-    output_filename = output_dir + dataset_name + version_id + '.train.tfrecord'
+    output_filename = output_dir + train_dataset_name + version_id + '.train.tfrecord'
     gen_samples(user_train_data, output_filename, rng, vocab, max_seq_length, dupe_factor, mask_prob, masked_lm_prob,
-                max_predictions_per_seq, prop_sliding_window, pool_size, force_last=False)
+                max_predictions_per_seq, prop_sliding_window, pool_size, force_last=False)  # in training force last
     print('train:{}'.format(output_filename))
 
     print('begin to generate test')
-    output_filename = output_dir + dataset_name + version_id + '.test.tfrecord'
+    output_filename = output_dir + train_dataset_name + version_id + '.test.tfrecord'
     gen_samples(user_test_data, output_filename, rng, vocab, max_seq_length, dupe_factor, mask_prob, masked_lm_prob,
                 max_predictions_per_seq, -1.0, pool_size, force_last=True)
     print('test:{}'.format(output_filename))
@@ -489,12 +494,12 @@ def main():
                  vocab.get_user_count(),
                  vocab.get_item_count(),
                  vocab.get_item_count() + vocab.get_special_token_count()))
-    vocab_file_name = output_dir + dataset_name + version_id + '.vocab'
+    vocab_file_name = output_dir + train_dataset_name + version_id + '.vocab'
     print('vocab pickle file: ' + vocab_file_name)
     with open(vocab_file_name, 'wb') as output_file:
         pickle.dump(vocab, output_file, protocol=2)
 
-    his_file_name = output_dir + dataset_name + version_id + '.his'
+    his_file_name = output_dir + train_dataset_name + version_id + '.his'
     print('test data pickle file: ' + his_file_name)
     with open(his_file_name, 'wb') as output_file:
         pickle.dump(user_test_data_output, output_file, protocol=2)
