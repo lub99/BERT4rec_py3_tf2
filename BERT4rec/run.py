@@ -198,7 +198,7 @@ class EvalHooks(tf.estimator.SessionRunHook):
             self.items_count_train = grp.ngroups
 
     def end(self, session):
-        all_results_str = "ndcg@1:{}, hit@1:{}， ndcg@5:{}, hit@5:{}, ndcg@10:{}, hit@10:{}, mrr@10:{}, ap:{}, valid_user:{}, ndcg@20:{}, hit@20:{}, mrr@20:{}, pop@20:{}, cov@20:{}".format(
+        all_results_str = "ndcg@1:{}, hit@1:{}， ndcg@5:{}, hit@5:{}, ndcg@10:{}, hit@10:{}, mrr@10:{}, ap:{}, valid_user:{}, ndcg@20:{}, hit@20:{}, mrr@20:{}, pop@20:{}, cov@20:{}\n".format(
             self.ndcg_1 / self.valid_user,
             self.hit_1 / self.valid_user,
             self.ndcg_5 / self.valid_user,
