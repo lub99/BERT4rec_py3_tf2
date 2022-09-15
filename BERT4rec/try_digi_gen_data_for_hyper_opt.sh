@@ -1,11 +1,11 @@
 #set "BERT4rec_HOME_DIR" as env variable in your shell!!!!!
 BERT4rec_HOME_DIR=${BERT4rec_HOME_DIR}
 CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
-dataset_name="retailrocket"
-train_dataset_name="events_train_full.4"
-test_dataset_name="events_test.4"
+dataset_name="digi"
+train_dataset_name="train-item-views_train_full.4"
+test_dataset_name="train-item-views_test.4"
 max_predictions_per_seq=10
-masked_lm_prob=0.5
+masked_lm_prob=0.25
 
 
 mask_prob=1.0
